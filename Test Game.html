@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Crucial for the R1: locks it to the physical dimensions and kills zooming -->
+<meta name="viewport" content="width=240, height=282, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>R-1 EXTRACTOR</title>
+<style>
+  :root {
+    --term-green: #39ff14;
+    --bg: #0a0a0a;
+  }
+  
+  * { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--term-green);
+    font-family: monospace;
+    width: 240px;
+    height: 282px;
+    overflow: hidden; /* No scrolling the main body, keeps it feeling like a native app */
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+  }
+
+  header { 
+    text-align: center; 
+    border-bottom: 1px solid var(--term-green); 
+    padding-bottom: 4px; 
+    margin-bottom: 6px; 
+    font-size: 14px; 
+    font-weight: bold; 
+    letter-spacing: 1px;
+  }
+
+  .screen { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    font-size: 12px; 
+  }
+
+  .stats { 
+    border: 1px dashed #333; 
+    padding: 4px; 
+    margin-bottom: 6px; 
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .log { 
+    flex-grow: 1; 
+    margin-bottom: 6px; 
+    padding: 2px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-end; 
+    overflow: hidden; 
+  }
+
+  .log p { 
+    margin: 2px 0; 
+    opacity: 0.8;
+  }
+  
+  .log p:last-child {
+    opacity: 1;
+    font-weight: bold;
+  }
+
+  button {
+    background: var(--term-green);
+    color: var(--bg);
+    border: none;
+    padding: 10px;
+    font-family: monospace;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    width: 100%;
+    border-radius: 2px;
+  }
+
+  button:active { 
+    background: #fff; 
+  }
+</style>
+</head>
+<body>
+  <header>SYS.EXTRACT // R1</header>
+  
+  <div class="screen">
+    <div class="stats">
+      <span>CR: <span id="creds">0</span></span>
+      <span>SCRAP: <span id="scrap">0</span></span>
+    </div>
+    
+    <div class="log" id="log">
+      <p>> BOOT SEQUENCE OK.</p>
+    </div>
+    
+    <button id="btn-scavenge">SCAN SECTOR</button>
+  </div>
+
+  <script>
+    // Local saves by default so the R1 doesn't wipe your progress
+    let state = JSON.parse(localStorage.getItem('r1ExtractSave')) || { creds: 0, scrap: 0 };
+    
+    const credsEl = document.getElementById('creds');
+    const scrapEl = document.getElementById('scrap');
+    const logEl = document.getElementById('log');
+    const btn = document.getElementById('btn-scavenge');
+
+    const lootTable = [
+      { msg: "Found rusted wiring.", scrap: 2, creds: 0 },
+      { msg: "Hacked a dead terminal.", scrap: 0, creds: 15 },
+      { msg: "Looted a broken synth.", scrap: 5, creds: 5 },
+      { msg: "Sector empty. Jack shit.", scrap: 0, creds: 0 },
+      { msg: "Extracted a corrupted drive.", scrap: 1, creds: 50 },
+      { msg: "Avoided a patrol. Scavenged parts.", scrap: 3, creds: 0 }
+    ];
+
+    function updateUI() {
+      credsEl.innerText = state.creds;
+      scrapEl.innerText = state.scrap;
+    }
+
+    function saveGame() {
+      localStorage.setItem('r1ExtractSave', JSON.stringify(state));
+    }
+
+    function logMsg(text) {
+      const p = document.createElement('p');
+      p.innerText = `> ${text}`;
+      logEl.appendChild(p);
+      
+      // Keep the log tight so it doesn't overflow the 282px height
+      if (logEl.children.length > 5) {
+        logEl.removeChild(logEl.firstChild);
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      const roll = lootTable[Math.floor(Math.random() * lootTable.length)];
+      state.scrap += roll.scrap;
+      state.creds += roll.creds;
+      
+      logMsg(roll.msg);
+      
+      updateUI();
+      saveGame();
+    });
+
+    // Init UI on load
+    updateUI();
+  </script>
+</body>
+</html>
